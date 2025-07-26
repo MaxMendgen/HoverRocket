@@ -5,27 +5,43 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 
+// TODO:
+// - In ControlFinPhysics.cs and RockPhysics.cs, add setting to change between Ncrit9 and Ncrit5
+// - Implement code to graph data
+
+public enum PolarNcritType { Ncrit9, Ncrit5 }
+public enum PolarValueType { Alpha, Cl, Cd, Cdp, Cm, TopXtr, BotXtr }
+
+/// <summary>
+/// Reads airfoil data from CSV files and converts between different polar values. (Note: It is assumed that alpha values have the same spacing in all CSV files)
+/// </summary>
 public class AirfoilReader : MonoBehaviour
 {
     [Header("CSV Files")]
-    public TextAsset csvFileNcrit9;
-    public TextAsset csvFileNcrit5;
+    public DataFile[] csvFilesNcrit9 = new DataFile[3];
+    public DataFile[] csvFilesNcrit5 = new DataFile[3];
 
     [Header("Graphs")]
-    [SerializeField] private MultiGraphRenderer multiGraphRenderer1;
-    [SerializeField] private MultiGraphRenderer multiGraphRenderer2;
-    [SerializeField] private MultiGraphRenderer multiGraphRenderer3;
+    public MultiGraphRenderer multiGraphRendererCl;
+    public MultiGraphRenderer multiGraphRendererCd;
+    public MultiGraphRenderer multiGraphRendererCm;
 
     [Header("Data")]
-    public AirfoildData ncrit9Data;
-    public AirfoildData ncrit5Data;
+    public MultiplePolarData polarDataNcrit9 = new(PolarNcritType.Ncrit9);
+    public MultiplePolarData polarDataNcrit5 = new(PolarNcritType.Ncrit5);
 
     void Awake()
     {
-        ncrit9Data = ReadData(csvFileNcrit9);
-        ncrit9Data.onConvert += OnDataConvert;
-        ncrit5Data = ReadData(csvFileNcrit5);
-        ncrit5Data.onConvert += OnDataConvert;
+        // Clear all data
+        polarDataNcrit9.ClearPolarDatas();
+        polarDataNcrit5.ClearPolarDatas();
+
+        // Read all data from CSV files
+        ReadAndAddAllData();
+
+        // Set up event listeners
+        polarDataNcrit9.onConvert += OnDataConvert;
+        polarDataNcrit5.onConvert += OnDataConvert;
     }
 
     void Start()
@@ -33,168 +49,212 @@ public class AirfoilReader : MonoBehaviour
         DisplayData();
     }
 
+    void ReadAndAddAllData()
+    {
+        foreach (DataFile dataFile in csvFilesNcrit9)
+        {
+            SinglePolarData polarData = dataFile.ReadData();
+            if (polarData != null)
+                polarDataNcrit9.AddPolarData(polarData);
+        }
+        foreach (DataFile dataFile in csvFilesNcrit5)
+        {
+            SinglePolarData polarData = dataFile.ReadData();
+            if (polarData != null)
+                polarDataNcrit5.AddPolarData(polarData);
+        }
+    }
+
     void DisplayData()
     {
-        for (int i = 0; i < ncrit9Data.alpha.Count; i++)
+        // Clear all graphs
+        multiGraphRendererCl?.ClearPoints();
+        multiGraphRendererCd?.ClearPoints();
+        multiGraphRendererCm?.ClearPoints();
+
+        // Display data for Ncrit9
+        for (int i = 0; i < polarDataNcrit9.polarDatas.Count; i++)
         {
-            multiGraphRenderer1?.AddPoint(0, new Vector2(ncrit9Data.alpha[i], ncrit9Data.cl[i]));
-            multiGraphRenderer2?.AddPoint(0, new Vector2(ncrit9Data.alpha[i], ncrit9Data.cd[i]));
-            multiGraphRenderer3?.AddPoint(0, new Vector2(ncrit9Data.alpha[i], ncrit9Data.cm[i]));
-        }
-
-        for (int i = 0; i < ncrit5Data.alpha.Count; i++)
-        {
-            multiGraphRenderer1?.AddPoint(1, new Vector2(ncrit5Data.alpha[i], ncrit5Data.cl[i]));
-            multiGraphRenderer2?.AddPoint(1, new Vector2(ncrit5Data.alpha[i], ncrit5Data.cd[i]));
-            multiGraphRenderer3?.AddPoint(1, new Vector2(ncrit5Data.alpha[i], ncrit5Data.cm[i]));
-        }
-    }
-
-    public void OnDataConvert(float fromValue, AirfoildData.ValueType fromType, float toValue, AirfoildData.ValueType toType)
-    {
-        if (toType == AirfoildData.ValueType.Cl)
-        {
-            multiGraphRenderer1?.TogglePointReader(true);
-            multiGraphRenderer1?.SetPointReader(new Vector2(fromValue, toValue));
-        }
-        else if (toType == AirfoildData.ValueType.Cd)
-        {
-            multiGraphRenderer2?.TogglePointReader(true);
-            multiGraphRenderer2?.SetPointReader(new Vector2(fromValue, toValue));
-        }
-    }
-
-    string[] ReadCSV(string csvContent)
-    {
-        using StringReader reader = new(csvContent);
-        List<string> lines = new();
-        bool dataStart = false;
-
-        string line;
-        while ((line = reader.ReadLine()) != null) //Iterates through every Line
-        {
-            //Detect header and start processing
-            if (line.StartsWith("Alpha,"))
-                dataStart = true;
-
-            if (dataStart && !string.IsNullOrWhiteSpace(line))
-                lines.Add(line);
-        }
-
-        return lines.ToArray();
-    }
-    AirfoildData ReadData(TextAsset csvFile)
-    {
-        if (csvFile == null)
-            return null;
-
-        AirfoildData airfoildData = new();
-
-        string[] dataLines = ReadCSV(csvFile.text);
-        for (int i = 1; i < dataLines.Length; i++) //Skip header row
-        {
-            string[] values = dataLines[i].Split(",");
-
-            if (values.Length == 7)
+            SinglePolarData polarData = polarDataNcrit9.polarDatas[i];
+            for (int j = 0; j < polarData[PolarValueType.Alpha].Count; j++)
             {
-                airfoildData.alpha.Add(float.Parse(values[0], CultureInfo.InvariantCulture));
-                airfoildData.cl.Add(float.Parse(values[1], CultureInfo.InvariantCulture));
-                airfoildData.cd.Add(float.Parse(values[2], CultureInfo.InvariantCulture));
-                airfoildData.cdp.Add(float.Parse(values[3], CultureInfo.InvariantCulture));
-                airfoildData.cm.Add(float.Parse(values[4], CultureInfo.InvariantCulture));
-                airfoildData.topXtr.Add(float.Parse(values[5], CultureInfo.InvariantCulture));
-                airfoildData.botXtr.Add(float.Parse(values[6], CultureInfo.InvariantCulture));
+                float alpha = polarData[PolarValueType.Alpha][j];
+                float cl = polarData[PolarValueType.Cl][j];
+                float cd = polarData[PolarValueType.Cd][j];
+                float cm = polarData[PolarValueType.Cm][j];
+
+                multiGraphRendererCl?.AddPoint(i, new Vector2(alpha, cl));
+                multiGraphRendererCd?.AddPoint(i, new Vector2(alpha, cd));
+                multiGraphRendererCm?.AddPoint(i, new Vector2(alpha, cm));
             }
         }
-
-        return airfoildData;
     }
 
+    bool onDataConvertClIsScheduled = false, onDataConvertCdIsScheduled = false;
+    Vector2 lastClPoint, lastCdPoint;
+
+    // Note: this function gets called a LOT of times, so be careful with performance
+    void OnDataConvert(float fromValue, PolarValueType fromType, float toValue, PolarValueType toType)
+    {
+        if (toType == PolarValueType.Cl)
+        {
+            lastClPoint = new Vector2(fromValue, toValue);
+
+            if (!onDataConvertClIsScheduled)
+            {
+                onDataConvertClIsScheduled = true;
+                StartCoroutine(DeferredRenderOnDataConvertCl());
+            }
+        }
+        else if (toType == PolarValueType.Cd)
+        {
+            lastCdPoint = new Vector2(fromValue, toValue);
+
+            if (!onDataConvertCdIsScheduled)
+            {
+                onDataConvertCdIsScheduled = true;
+                StartCoroutine(DeferredRenderOnDataConvertCd());
+            }
+        }
+    }
+    IEnumerator DeferredRenderOnDataConvertCl()
+    {
+        yield return new WaitForEndOfFrame(); // Defer to end of frame
+        onDataConvertClIsScheduled = false;
+
+        multiGraphRendererCl?.TogglePointReader(true);
+        multiGraphRendererCl?.SetPointReader(lastClPoint);
+    }
+    IEnumerator DeferredRenderOnDataConvertCd()
+    {
+        yield return new WaitForEndOfFrame(); // Defer to end of frame
+        onDataConvertCdIsScheduled = false;
+
+        multiGraphRendererCd?.TogglePointReader(true);
+        multiGraphRendererCd?.SetPointReader(lastCdPoint);
+    }
+
+    void OnValidate()
+    {
+        polarDataNcrit9.UpdateInspector();
+        polarDataNcrit5.UpdateInspector();
+    }
+
+
+    [System.Serializable]
+    public class DataFile
+    {
+        public TextAsset csvFile;
+        public int raynoldsNumber;
+
+        string[] ReadCSV(string csvContent)
+        {
+            using StringReader reader = new(csvContent);
+            List<string> lines = new();
+            bool dataStart = false;
+
+            string line;
+            while ((line = reader.ReadLine()) != null) //Iterates through every Line
+            {
+                //Detect header and start processing
+                if (line.StartsWith("Alpha,"))
+                    dataStart = true;
+
+                if (dataStart && !string.IsNullOrWhiteSpace(line))
+                    lines.Add(line);
+            }
+
+            return lines.ToArray();
+        }
+
+        public SinglePolarData ReadData()
+        {
+            if (csvFile == null)
+                return null;
+
+            SinglePolarData polarData = new(raynoldsNumber);
+
+            string[] dataLines = ReadCSV(csvFile.text);
+            for (int i = 1; i < dataLines.Length; i++) //Skip header row
+            {
+                string[] values = dataLines[i].Split(",");
+
+                if (values.Length == 7)
+                {
+                    polarData.AddValue(PolarValueType.Alpha, float.Parse(values[0], CultureInfo.InvariantCulture));
+                    polarData.AddValue(PolarValueType.Cl, float.Parse(values[1], CultureInfo.InvariantCulture));
+                    polarData.AddValue(PolarValueType.Cd, float.Parse(values[2], CultureInfo.InvariantCulture));
+                    polarData.AddValue(PolarValueType.Cdp, float.Parse(values[3], CultureInfo.InvariantCulture));
+                    polarData.AddValue(PolarValueType.Cm, float.Parse(values[4], CultureInfo.InvariantCulture));
+                    polarData.AddValue(PolarValueType.TopXtr, float.Parse(values[5], CultureInfo.InvariantCulture));
+                    polarData.AddValue(PolarValueType.BotXtr, float.Parse(values[6], CultureInfo.InvariantCulture));
+                }
+            }
+
+            return polarData;
+        }
+    }
 }
 
 [System.Serializable]
-public class AirfoildData
+public class SinglePolarData
 {
-    public enum ValueType { Alpha, Cl, Cd, Cdp, Cm, TopXtr, BotXtr }
-
-    public List<float> alpha = new();
-    public List<float> cl = new();
-    public List<float> cd = new();
-    public List<float> cdp = new();
-    public List<float> cm = new();
-    public List<float> topXtr = new();
-    public List<float> botXtr = new();
-
-    public Dictionary<ValueType, List<float>> valueMap;
-
-    public System.Action<float, ValueType, float, ValueType> onConvert;
-
-    public AirfoildData()
+    public int raynoldsNumber;
+    public Dictionary<PolarValueType, List<float>> ValueMap
     {
-        alpha = new();
-        cl = new();
-        cd = new();
-        cdp = new();
-        cm = new();
-        topXtr = new();
-        botXtr = new();
-    }
-
-    public void UpdateValueMap()
-    {
-        valueMap = new()
+        get => valueMap;
+        set
         {
-            { ValueType.Alpha, alpha },
-            { ValueType.Cl, cl },
-            { ValueType.Cd, cd },
-            { ValueType.Cdp, cdp },
-            { ValueType.Cm, cm },
-            { ValueType.TopXtr, topXtr },
-            { ValueType.BotXtr, botXtr }
-        };
+            valueMap = value;
+            UpdateInspector();
+        }
+    }
+    private Dictionary<PolarValueType, List<float>> valueMap;
+
+    [SerializeField] private InspectableValueMap _inspectableValueMap; // For inspector display
+
+    public System.Action<float, PolarValueType, float, PolarValueType> onConvert;
+
+    public List<float> this[PolarValueType type] => ValueMap[type];
+
+    public SinglePolarData(int raynoldsNumber)
+    {
+        this.raynoldsNumber = raynoldsNumber;
+        // Initialize ValueMap with all possible PolarValueTypes
+        ValueMap = System.Enum.GetValues(typeof(PolarValueType))
+            .Cast<PolarValueType>()
+            .ToDictionary(type => type, type => new List<float>());
+    }
+    public SinglePolarData(int raynoldsNumber, List<PolarValueType> types)
+    {
+        this.raynoldsNumber = raynoldsNumber;
+        ValueMap = new();
+        foreach (PolarValueType type in types)
+            ValueMap[type] = new List<float>();
     }
 
-    // public float ConvertValue(float value, ValueType from, ValueType to)
-    // {
-    //     UpdateValueMap();
-
-    //     // Invalid ValueType
-    //     if (!valueMap.ContainsKey(from) || !valueMap.ContainsKey(to))
-    //     {
-    //         onConvert?.Invoke(value, from, 0f, to);
-    //         return 0f;
-    //     }
-
-    //     List<float> fromList = valueMap[from];
-    //     List<float> toList = valueMap[to];
-
-    //     // Convert fromType to toType via index
-    //     int index = fromList.IndexOf(ExtraClass.ClosestValue(value, fromList));
-    //     if (index == -1 || index >= toList.Count) // Avoid out-of-bounds errors
-    //     {
-    //         onConvert?.Invoke(value, from, 0f, to);
-    //         return 0f;
-    //     }
-    //     float result = toList[index];
-
-    //     // Return result and invoke onConvert
-    //     onConvert?.Invoke(value, from, result, to);
-    //     return result;
-    // }
-
-    public float ConvertValue(float value, ValueType from, ValueType to)
+    public void AddValue(PolarValueType type, float value)
     {
-        UpdateValueMap();
+        if (ValueMap.ContainsKey(type))
+            ValueMap[type].Add(value);
+    }
+    public void ClearValues()
+    {
+        foreach (var key in ValueMap.Keys)
+            ValueMap[key].Clear();
+    }
 
-        // Invalid ValueType
-        if (!valueMap.ContainsKey(from) || !valueMap.ContainsKey(to))
+    public float ConvertValue(float value, PolarValueType from, PolarValueType to)
+    {
+        // Ensure valid ValueType
+        if (!ValueMap.ContainsKey(from) || !ValueMap.ContainsKey(to))
         {
             onConvert?.Invoke(value, from, 0f, to);
             return 0f;
         }
 
-        List<float> fromList = valueMap[from];
-        List<float> toList = valueMap[to];
+        List<float> fromList = ValueMap[from];
+        List<float> toList = ValueMap[to];
 
         // Ensure valid input
         if (fromList.Count == 0 || toList.Count == 0 || fromList.Count != toList.Count)
@@ -220,68 +280,248 @@ public class AirfoildData
         {
             float closestValue = ExtraClass.ClosestValue(value, fromList);
             int index = fromList.IndexOf(closestValue);
-            if (index == -1 || index >= toList.Count)
-            {
-                onConvert?.Invoke(value, from, 0f, to);
-                return 0f;
-            }
-            float result = toList[index];
+
+            float result = 0f;
+            if (index != -1 && index < toList.Count)
+                result = toList[index];
+            else
+                Debug.LogError($"Closest value not found in the list for {from} to {to}. Value: {value}");
+
             onConvert?.Invoke(value, from, result, to);
             return result;
         }
 
-        // Get values for interpolation
+        // Linearly interpolate between the two points
         float x0 = fromList[lowerIndex], x1 = fromList[upperIndex];
         float y0 = toList[lowerIndex], y1 = toList[upperIndex];
 
-        // Linear interpolation formula: y = y0 + (value - x0) * (y1 - y0) / (x1 - x0)
-        float interpolatedValue = y0 + (value - x0) * (y1 - y0) / (x1 - x0);
+        float percentage = (value - x0) / (x1 - x0);
+        float interpolatedValue = Mathf.Lerp(y0, y1, percentage);
 
-        // Return interpolated result and invoke event
+        // Return interpolated result
         onConvert?.Invoke(value, from, interpolatedValue, to);
         return interpolatedValue;
     }
 
-    public float GetMaxValue(ValueType checkType) => GetMaxValue(checkType, checkType);
-    public float GetMaxValue(ValueType checkType, ValueType outputType)
+    public float GetMaxValue(PolarValueType checkType) => GetMaxValue(checkType, checkType);
+    public float GetMaxValue(PolarValueType checkType, PolarValueType outputType)
     {
-        UpdateValueMap();
-
         // Invalid ValueType
-        if (!valueMap.ContainsKey(checkType) || !valueMap.ContainsKey(outputType))
+        if (!ValueMap.ContainsKey(checkType) || !ValueMap.ContainsKey(outputType))
             return 0f;
 
         // Get max
-        float maxValue = valueMap[checkType].Max();
+        float maxValue = ValueMap[checkType].Max();
 
         // Convert to outputType via index
-        int index = valueMap[checkType].IndexOf(maxValue);
-        if (index == -1 || index >= valueMap[outputType].Count) // Avoid out-of-bounds errors
+        int index = ValueMap[checkType].IndexOf(maxValue);
+        if (index == -1 || index >= ValueMap[outputType].Count) // Avoid out-of-bounds errors
             return 0f;
 
         // Return
-        return valueMap[outputType][index];
+        return ValueMap[outputType][index];
     }
 
-    public float GetMinValue(ValueType checkType) => GetMinValue(checkType, checkType);
-    public float GetMinValue(ValueType checkType, ValueType outputType)
+    public float GetMinValue(PolarValueType checkType) => GetMinValue(checkType, checkType);
+    public float GetMinValue(PolarValueType checkType, PolarValueType outputType)
     {
-        UpdateValueMap();
-
         // Invalid ValueType
-        if (!valueMap.ContainsKey(checkType) || !valueMap.ContainsKey(outputType))
+        if (!ValueMap.ContainsKey(checkType) || !ValueMap.ContainsKey(outputType))
             return 0f;
 
         // Get min
-        List<float> l = valueMap[checkType];
+        List<float> l = ValueMap[checkType];
         float maxValue = l.Min();
 
         // Convert to outputType via index
-        int index = valueMap[checkType].IndexOf(maxValue);
-        if (index == -1 || index >= valueMap[outputType].Count) // Avoid out-of-bounds errors
+        int index = ValueMap[checkType].IndexOf(maxValue);
+        if (index == -1 || index >= ValueMap[outputType].Count) // Avoid out-of-bounds errors
             return 0f;
 
         // Return
-        return valueMap[outputType][index];
+        return ValueMap[outputType][index];
+    }
+
+    public void UpdateInspector()
+    {
+        _inspectableValueMap = new InspectableValueMap(ValueMap);
+    }
+
+    [System.Serializable]
+    public class InspectableValueMap
+    {
+        public List<PairValue> valueMap;
+
+        public InspectableValueMap(Dictionary<PolarValueType, List<float>> valueMap)
+        {
+            this.valueMap = new();
+            foreach (var kvp in valueMap)
+                this.valueMap.Add(new PairValue(kvp.Key, kvp.Value));
+        }
+
+        [System.Serializable]
+        public class PairValue
+        {
+            public PolarValueType type;
+            public List<float> values;
+
+            public PairValue(PolarValueType type, List<float> values)
+            {
+                this.type = type;
+                this.values = values;
+            }
+        }
+    }
+}
+
+[System.Serializable]
+public class MultiplePolarData
+{
+    public PolarNcritType polarNcritType;
+    public List<SinglePolarData> polarDatas;
+
+    public System.Action<float, PolarValueType, float, PolarValueType> onConvert;
+
+    public MultiplePolarData(PolarNcritType polarNcritType)
+    {
+        this.polarNcritType = polarNcritType;
+        polarDatas = new();
+    }
+
+    public void AddPolarData(SinglePolarData polarData)
+    {
+        if (polarData != null)
+            polarDatas.Add(polarData);
+    }
+    public void ClearPolarDatas()
+    {
+        foreach (var polarData in polarDatas)
+            polarData.ClearValues();
+    }
+
+    public SinglePolarData GetSinglePolarData(int raynoldsNumber) => GetSinglePolarData(raynoldsNumber, System.Enum.GetValues(typeof(PolarValueType)).Cast<PolarValueType>().ToList());
+    public SinglePolarData GetSinglePolarData(int raynoldsNumber, List<PolarValueType> types)
+    {
+        // Find the two closest polar data sets
+        int lowerIndex = -1, upperIndex = -1;
+        for (int i = 0; i < polarDatas.Count - 1; i++)
+        {
+            if (polarDatas[i].raynoldsNumber <= raynoldsNumber && polarDatas[i + 1].raynoldsNumber >= raynoldsNumber)
+            {
+                lowerIndex = i;
+                upperIndex = i + 1;
+                break;
+            }
+        }
+
+        // If no valid range is found, return the closest polar data
+        if (lowerIndex == -1 && upperIndex == -1)
+        {
+            // Find the closest polar data set
+            float closestRaynoldsNumber = ExtraClass.ClosestValue(raynoldsNumber, polarDatas.Select(d => d.raynoldsNumber).ToList());
+            int index = polarDatas.FindIndex(d => d.raynoldsNumber == closestRaynoldsNumber);
+            if (index != -1)
+                return polarDatas[index];
+            else
+            {
+                Debug.LogError($"Closest polar data not found for Raynolds number: {raynoldsNumber}");
+                return null; // No valid polar data found
+            }
+        }
+
+        // Interpolate between the two polar data sets
+        SinglePolarData lowerPolarData = polarDatas[lowerIndex];
+        SinglePolarData upperPolarData = polarDatas[upperIndex];
+
+        float percentage = (float)(raynoldsNumber - lowerPolarData.raynoldsNumber) / (upperPolarData.raynoldsNumber - lowerPolarData.raynoldsNumber);
+
+        SinglePolarData result = new(raynoldsNumber, types);
+        foreach (PolarValueType type in types)
+        {
+            // Interpolate the values for the given type
+            List<float> lowerValues = lowerPolarData[type];
+            List<float> upperValues = upperPolarData[type];
+
+            List<float> interpolatedValues = InterpolateBetweenLists(lowerValues, upperValues, percentage);
+
+            result.ValueMap[type] = interpolatedValues;
+        }
+
+        // Return the interpolated result
+        return result;
+    }
+    List<float> InterpolateBetweenLists(List<float> listA, List<float> listB, float percentage)
+    {
+        if (listA == null || listB == null)
+            throw new System.ArgumentNullException("One of the lists is null.");
+
+        // Offset shorter list to center, then fill with closest values. Ensure both lists are the same length
+        if (listA.Count < listB.Count)
+        {
+            int offset = (listB.Count - listA.Count) / 2;
+            for (int i = 0; i < offset; i++)
+            {
+                listA.Insert(0, ExtraClass.ClosestValue(listB[i], listA));
+                listA.Add(ExtraClass.ClosestValue(listB[listB.Count - 1 - i], listA));
+            }
+
+        }
+        else if (listB.Count < listA.Count)
+        {
+            int offset = (listA.Count - listB.Count) / 2;
+            for (int i = 0; i < offset; i++)
+            {
+                listB.Insert(0, ExtraClass.ClosestValue(listA[i], listB));
+                listB.Add(ExtraClass.ClosestValue(listA[listA.Count - 1 - i], listB));
+            }
+        }
+
+        // Interpolate between the two lists
+        List<float> result = new List<float>(listA.Count);
+        for (int i = 0; i < listA.Count; i++)
+        {
+            float interpolatedValue = Mathf.Lerp(listA[i], listB[i], percentage);
+            result.Add(interpolatedValue);
+        }
+
+        return result;
+    }
+
+    public float ConvertValue(float value, PolarValueType from, PolarValueType to, int raynoldsNumber)
+    {
+        // Get the polar data for the given Raynolds number
+        SinglePolarData polarData = GetSinglePolarData(raynoldsNumber, new List<PolarValueType> { from, to });
+
+        // Add event listener for conversion
+        polarData.onConvert += onConvert;
+
+        // Convert value using the polar data
+        return polarData.ConvertValue(value, from, to);
+    }
+
+    public float GetMaxValue(PolarValueType checkType, int raynoldsNumber) => GetMaxValue(checkType, checkType, raynoldsNumber);
+    public float GetMaxValue(PolarValueType checkType, PolarValueType outputType, int raynoldsNumber)
+    {
+        // Get the polar data for the given Raynolds number
+        SinglePolarData polarData = GetSinglePolarData(raynoldsNumber, new List<PolarValueType> { checkType, outputType });
+
+        // Get max value using the polar data
+        return polarData.GetMaxValue(checkType, outputType);
+    }
+
+    public float GetMinValue(PolarValueType checkType, int raynoldsNumber) => GetMinValue(checkType, checkType, raynoldsNumber);
+    public float GetMinValue(PolarValueType checkType, PolarValueType outputType, int raynoldsNumber)
+    {
+        // Get the polar data for the given Raynolds number
+        SinglePolarData polarData = GetSinglePolarData(raynoldsNumber, new List<PolarValueType> { checkType, outputType });
+
+        // Get min value using the polar data
+        return polarData.GetMinValue(checkType, outputType);
+    }
+
+    public void UpdateInspector()
+    {
+        foreach (var polarData in polarDatas)
+            polarData.UpdateInspector();
     }
 }

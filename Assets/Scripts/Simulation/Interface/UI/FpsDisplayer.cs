@@ -10,6 +10,8 @@ public class FpsDisplayer : MonoBehaviour
 
     float currentFps, lastFps, fixedFps;
 
+    int countSlowFrames = 0, countSlowFramesMax = 10;
+
     private void Start()
     {
         StartCoroutine(CoroutineLastFps());
@@ -23,6 +25,23 @@ public class FpsDisplayer : MonoBehaviour
             currentFps = 0f;
 
         fpsText.text = $"Current FPS: {currentFps:F2}\nLast FPS: {lastFps:F2}\nFixed FPS: {fixedFps:F2}";
+
+        // Safety: Break Simulation if FPS is too low
+        if (1 / Time.deltaTime < 1f)
+        {
+            countSlowFrames++;
+            if (countSlowFrames >= countSlowFramesMax)
+            {
+                Debug.LogWarning("FPS is too low! Stopping simulation.");
+#if UNITY_EDITOR
+                UnityEditor.EditorApplication.isPlaying = false;
+#endif
+            }
+        }
+        else
+        {
+            countSlowFrames = 0;
+        }
     }
 
     private void FixedUpdate()

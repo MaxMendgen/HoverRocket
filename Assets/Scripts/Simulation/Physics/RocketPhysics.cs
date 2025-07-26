@@ -37,7 +37,7 @@ public class RocketPhysics : MonoBehaviour
 
     [Header("Ignore")]
     public bool ignoreForcePropeller;
-    [HideInInspector] public bool ignoreTorquePropeller = true;
+    public bool ignoreTorquePropeller = true;
     public bool ignoreForceGravity;
     public bool ignoreAllForceLift;
     public bool ignoreAllForceDrag;
@@ -65,8 +65,6 @@ public class RocketPhysics : MonoBehaviour
         mainRB.maxAngularVelocity = Mathf.Infinity;
         mainRB.inertiaTensor = massMomentOfInertia;
         UpdatesValues();
-
-        ignoreTorquePropeller = true; // Temp
     }
 
     private void FixedUpdate()

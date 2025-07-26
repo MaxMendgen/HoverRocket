@@ -120,6 +120,32 @@ public static class ExtraClass
     public static float ClosestValue(float number, List<float> list) => list.Aggregate((x, y) => Mathf.Abs(x - number) < Mathf.Abs(y - number) ? x : y);
 
     /// <summary>
+    /// Finds the closest value to a given number from a list.
+    /// </summary>
+    public static float ClosestValue(int number, List<int> list) => list.Aggregate((x, y) => Mathf.Abs(x - number) < Mathf.Abs(y - number) ? x : y);
+
+    /// <summary>
+    /// Interpolates between two lists of floats based on a percentage.
+    /// </summary>
+    public static List<float> InterpolateBetweenLists(List<float> listA, List<float> listB, float percentage)
+    {
+        if (listA == null || listB == null)
+            throw new System.ArgumentNullException("One of the lists is null.");
+
+        if (listA.Count != listB.Count)
+            throw new System.ArgumentException("Lists must be of the same length to interpolate.");
+
+        List<float> result = new List<float>(listA.Count);
+        for (int i = 0; i < listA.Count; i++)
+        {
+            float interpolatedValue = Mathf.Lerp(listA[i], listB[i], percentage);
+            result.Add(interpolatedValue);
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Combines two vectors by multiplying their components.
     /// </summary>
     public static Vector3 CombineVectors(Vector3 v1, Vector3 v2) => new Vector3(v1.x * v2.x, v1.y * v2.y, v1.z * v2.z);

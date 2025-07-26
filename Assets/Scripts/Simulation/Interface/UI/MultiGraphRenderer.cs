@@ -163,6 +163,14 @@ public class MultiGraphRenderer : MonoBehaviour
                 catch { }
             }
         }
+
+        // // For Inspector, will kill performance
+        // try
+        // {
+        //     firstListOfPoints = listOfPoints[0];
+        //     secondListOfPoints = listOfPoints[1];
+        // }
+        // catch { }
     }
     void UpdateAutos()
     {
@@ -289,6 +297,9 @@ public class MultiGraphRenderer : MonoBehaviour
     /// <param name="position"></param>
     public void SetPointReader(Vector2 position)
     {
+        if (pointReaderPosition == position)
+            return;
+
         pointReaderPosition = position;
         UpdatePointReader();
     }
@@ -298,6 +309,9 @@ public class MultiGraphRenderer : MonoBehaviour
     /// <param name="truth"></param>
     public void TogglePointReader(bool truth)
     {
+        if (showPointReader == truth)
+            return;
+
         showPointReader = truth;
         UpdatePointReader();
     }
@@ -351,12 +365,5 @@ public class MultiGraphRenderer : MonoBehaviour
         YAxisValueRange = (yAxisValueRange.x, yAxisValueRange.y);
         UpdateLineRenderers();
         UpdatePointReader();
-
-        try
-        {
-            firstListOfPoints = listOfPoints[0];
-            secondListOfPoints = listOfPoints[1];
-        }
-        catch { }
     }
 }

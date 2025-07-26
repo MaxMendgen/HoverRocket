@@ -23,7 +23,7 @@ public class ControlFinPhysics : MonoBehaviour
     [SerializeField] private bool ignoreForceDrag;
 
     [Header("Infos")]
-    [SerializeField] private float raynoldsNumber;
+    [SerializeField] private int raynoldsNumber;
     [SerializeField] private Vector3 forceLift, forceDrag;
     [SerializeField] private float lengthForceLift;
     (Vector3, Vector3) rangeForceLift;
@@ -45,7 +45,7 @@ public class ControlFinPhysics : MonoBehaviour
     private void Start()
     {
         GetObjects();
-        rangeCl = (airfoilReader.ncrit9Data.GetMinValue(AirfoildData.ValueType.Cl), airfoilReader.ncrit9Data.GetMaxValue(AirfoildData.ValueType.Cl));
+        rangeCl = (airfoilReader.polarDataNcrit9.GetMinValue(PolarValueType.Cl, 100000), airfoilReader.polarDataNcrit9.GetMaxValue(PolarValueType.Cl, 100000));
     }
 
     private void FixedUpdate()
@@ -106,9 +106,9 @@ public class ControlFinPhysics : MonoBehaviour
         Vector3 directionForceDrag = -RocketData.RocketTransform.up; //Directly down from the fin (with orientation of rocket)
 
         //Calculations
-        raynoldsNumber = flowVelocity * lengthOfProflie * airDensity / dynamicViscosity;
-        float cl = airfoilReader.ncrit9Data.ConvertValue(alphaAngleCurrent, AirfoildData.ValueType.Alpha, AirfoildData.ValueType.Cl);
-        float cd = airfoilReader.ncrit9Data.ConvertValue(alphaAngleCurrent, AirfoildData.ValueType.Alpha, AirfoildData.ValueType.Cd);
+        raynoldsNumber = (int)(flowVelocity * lengthOfProflie * airDensity / dynamicViscosity);
+        float cl = airfoilReader.polarDataNcrit9.ConvertValue(alphaAngleCurrent, PolarValueType.Alpha, PolarValueType.Cl, raynoldsNumber);
+        float cd = airfoilReader.polarDataNcrit9.ConvertValue(alphaAngleCurrent, PolarValueType.Alpha, PolarValueType.Cd, raynoldsNumber);
 
         float dynamicAirDensity = airDensity * flowVelocity * flowVelocity * 0.5f;
         //print($"{gameObject.name} dynamicAirDensity:{dynamicAirDensity} = airDensity:{airDensity} * flowVelocity:{flowVelocity} * flowVelocity:{flowVelocity} * 0.5f");
@@ -133,10 +133,11 @@ public class ControlFinPhysics : MonoBehaviour
 
     public float GetAlphaValueFromLift(float forceLiftGoal)
     {
+        raynoldsNumber = (int)(flowVelocity * lengthOfProflie * airDensity / dynamicViscosity);
         float dynamicairDensity = airDensity * flowVelocity * flowVelocity * 0.5f;
         float referencedArea = lengthOfProflie * lengthOfProflie;
         float cl = forceLiftGoal / (dynamicairDensity * referencedArea);
-        return airfoilReader.ncrit9Data.ConvertValue(cl, AirfoildData.ValueType.Cl, AirfoildData.ValueType.Alpha);
+        return airfoilReader.polarDataNcrit9.ConvertValue(cl, PolarValueType.Cl, PolarValueType.Alpha, raynoldsNumber);
     }
 
     public void SetFixedValues(float lengthOfProflie, float airDensity, float dynamicViscosity, float servoSecPer60Deg)
