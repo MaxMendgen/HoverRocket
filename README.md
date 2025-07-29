@@ -1,6 +1,6 @@
 # Autonomes Luftfahrzeug (ALL) – Q1 Projektarbeit
 
-![cover_image](External\Cover.png)
+![cover_image](External/Cover.png)
 
 Dieses Repository enthält die Projektarbeit der Q1 (2024/25), bei der wir ein Konzept für ein autonomes luftbetriebenes Luftfahrzeug (ALL) entwickelt haben.<br>
 Das Projekt umfasste **3D-Modellierung, Hardwaretests, Simulation und Software.**
