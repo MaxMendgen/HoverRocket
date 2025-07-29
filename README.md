@@ -26,7 +26,7 @@ Team I reichte seinen Teil ein, gewann den 1. Platz in der Regionalrunde und ein
 Die Simulation (Team II) konnte wegen der hohen Komplexität nicht fertiggestellt werden. Dieser zweite Teil soll 2026 separat bei Jugend forscht eingereicht werden.
 
 ## Inhalte des Repositories
-- **Unity-Simulation (aktueller Stand)**
+- **Unity-Simulation** (aktueller Stand 29.07.2025, Version Control verläuft über Unity Version Control)
 - **PDF Projektarbeit (Schule)**:
 [„Entwicklung eines autonomen luftbetriebenen Luftfahrzeugkonzeptes (ALL): 3D Modell, Simulation, Software & Teilintegrationstests“](External/PK_2INF2%20Projektarbeit%20Jan%20Theiler%2C%20Daniel%20Schmidt%2C%20Max%20Mendgen%2C%20Nelio%20Henning%20Abgabe.pdf)
 - **PDF Jugend-forscht (Team I)**:
