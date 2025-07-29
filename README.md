@@ -1,4 +1,7 @@
 # Autonomes Luftfahrzeug (ALL) – Q1 Projektarbeit
+
+![cover_image](External\Cover.png)
+
 Dieses Repository enthält die Projektarbeit der Q1 (2024/25), bei der wir ein Konzept für ein autonomes luftbetriebenes Luftfahrzeug (ALL) entwickelt haben.<br>
 Das Projekt umfasste **3D-Modellierung, Hardwaretests, Simulation und Software.**
 
@@ -25,9 +28,9 @@ Die Simulation (Team II) konnte wegen der hohen Komplexität nicht fertiggestell
 ## Inhalte des Repositories
 - **Unity-Simulation (aktueller Stand)**
 - **PDF Projektarbeit (Schule)**:
-[„Entwicklung eines autonomen luftbetriebenen Luftfahrzeugkonzeptes (ALL): 3D Modell, Simulation, Software & Teilintegrationstests“](https://github.com/MaxMendgen/HoverRocket/blob/44abd5789ca7f4a5942186ee0e32ec8eeb281f09/External/PK_2INF2%20Projektarbeit%20Jan%20Theiler%2C%20Daniel%20Schmidt%2C%20Max%20Mendgen%2C%20Nelio%20Henning%20Abgabe.pdf)
+[„Entwicklung eines autonomen luftbetriebenen Luftfahrzeugkonzeptes (ALL): 3D Modell, Simulation, Software & Teilintegrationstests“](External/PK_2INF2%20Projektarbeit%20Jan%20Theiler%2C%20Daniel%20Schmidt%2C%20Max%20Mendgen%2C%20Nelio%20Henning%20Abgabe.pdf)
 - **PDF Jugend-forscht (Team I)**:
-[„Motortests und Erstellung eines 3D Models für ein positionsstabilisierendes Luftobjekt“](https://github.com/MaxMendgen/HoverRocket/blob/44abd5789ca7f4a5942186ee0e32ec8eeb281f09/External/JuFoArbeit24-25V7.pdf)
+[„Motortests und Erstellung eines 3D Models für ein positionsstabilisierendes Luftobjekt“](External/JuFoArbeit24-25V7.pdf)
 
 ## Technische Schwerpunkte
 - 3D-Modellierung mit CAD (OnShape)
