@@ -1,4 +1,4 @@
-# Autonomes Luftfahrzeug (ALL) – Q1 Projektarbeit
+# Autonomes luftbetriebenen Luftfahrzeug (ALL) – Q1 Projektarbeit
 
 ![cover_image](External/Cover.png)
 
