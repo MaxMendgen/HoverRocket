@@ -58,7 +58,8 @@ Wir haben sehr viel gelernt über:
 - Max Mendgen
 - Nelio Henning
 
-Betreuung: Q1 Projektkurs Informatik 2024/25, Herrn Herrmann <br>(Schule: Gymnasiale Oberstufe Carl von Ossietzky Bremerhaven)
+Betreuung: Q1 Projektkurs Informatik 2024/25, Herrn Herrmann und Luten <br>(Schule: Gymnasiale Oberstufe Carl von Ossietzky Bremerhaven)
+
 
 ## Lizenz
 Dieses Projekt ist zu Lern- und Demonstrationszwecken öffentlich.
